@@ -19,15 +19,15 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/download_pardesio_se"
+        android:id="@+id/Mohammad_Rafi"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="166dp"
         android:layout_marginTop="386dp"
         android:layout_marginEnd="157dp"
         android:layout_marginBottom="241dp"
-        android:onClick="sendMessage"
-        android:text="@string/download_baharo_phool"
+        android:onClick="startMohammadRafiActivity"
+        android:text="@string/Mohammad_Rafi"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -36,36 +36,22 @@
         />
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/Kishore_Kumar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="161dp"
         android:layout_marginTop="471dp"
         android:layout_marginEnd="150dp"
         android:layout_marginBottom="156dp"
-        android:text="ShantanuDownload"
+        android:text="@string/kishore_kumar"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
-
-    <Button
-        android:id="@+id/button3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="191dp"
-        android:layout_marginTop="511dp"
-        android:layout_marginEnd="180dp"
-        android:layout_marginBottom="196dp"
-        android:text="Exception"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.576"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

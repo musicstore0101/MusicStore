@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity
     public long downloadID;
     private Button button;
 
+    /*
+    shantanu
     private BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
+     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,17 +54,15 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        button=findViewById(R.id.download_pardesio_se);
+        button=findViewById(R.id.Mohammad_Rafi);
 
-        //shantanu test setting second button as invisible
-        findViewById(R.id.button2).setVisibility(View.INVISIBLE);
-        Log.d("SHANTANU CLICK", "onCreate is being executed");
-        registerReceiver(onDownloadComplete,new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        //shantanu
+        //registerReceiver(onDownloadComplete,new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendMessage(view);
+                startMohammadRafiActivity(view);
             }
         });
     }
@@ -89,14 +90,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     // shantanu testing this
-    public void sendMessage(View view) {
-        System.out.println("Shantanu is here!!!!!!!!!!!!!!!!!!!");
-        Log.d("SHANTANU CLICK", "sendMessage is being executed");
+    public void startMohammadRafiActivity(View view) {
+
+
         switch(view.getId()) {
-            case R.id.download_pardesio_se:
-                findViewById(R.id.button2).setVisibility(view.VISIBLE);
+            case R.id.Mohammad_Rafi:
+
                 Log.d("SHANTANU","sendMessage case is hit");
 
+                Intent intent = new Intent(this, MohammadRafiSongs.class);
+                startActivity(intent);
+/*
+shantanu
                 Request request;// Set if download is allowed on roaming network
                 request = new Request(Uri.parse("http://ec2-13-234-37-59.ap-south-1.compute.amazonaws.com:8080/static/Baharo_phool_barsao.mp3"))
 
@@ -106,9 +111,6 @@ public class MainActivity extends AppCompatActivity
                         //.setRequiresCharging(false)// Set if charging is required to begin the download
                         .setAllowedOverMetered(true)// Set if download is allowed on Mobile network
                         .setAllowedOverRoaming(true);
-
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "MusicStore")
-                        .mkdirs();
 
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
                 request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"Baharo_phool_barsao.mp3");
@@ -128,11 +130,11 @@ public class MainActivity extends AppCompatActivity
                     }
                     catch (Exception e) {
                         e.printStackTrace();
-                        findViewById(R.id.button3).setVisibility(view.VISIBLE);
+
                     }
                     System.out.println("@@@@@ Shantanu after enqueuing request");
-                }
-
+               }
+*/
                 break;
             default:
                 throw new IllegalStateException("Shantanu Unexpected value: " + view.getId());
@@ -141,6 +143,7 @@ public class MainActivity extends AppCompatActivity
 
     public void onDestroy() {
           super.onDestroy();
-          unregisterReceiver(onDownloadComplete);
+          //shantanu
+          //unregisterReceiver(onDownloadComplete);
     }
 }
