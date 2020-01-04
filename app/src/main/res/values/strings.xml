@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MusicStore</string>
+    <string name="action_settings">Settings</string>
+    <string name="download">Download</string>
+    <string name="button">downlad2</string>
+    <string name="download_pardesio_se">download_pardesio_se</string>
+    <string name="download_baharo_phool">baharo_phool_barsao</string>
+</resources>
