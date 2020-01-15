@@ -25,7 +25,18 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+
 import app.music.musicstore.GlobalDefinitions;
+
+import static app.music.musicstore.GlobalDefinitions.g_externalStorageDownloadPath;
+import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiDownloadPath;
+import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiSongList;
+import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiSongListName;
+import static app.music.musicstore.GlobalDefinitions.g_parseMohammadRafiSongList;
 
 
 /* A new Scrollable activity*/
@@ -40,39 +51,11 @@ public class MohammadRafiSongs extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        LinearLayout rafi_layout = (LinearLayout) findViewById(R.id.rafi_linear_layout);
+        parseMohammadRafiSongList();
 
-        registerReceiver(onDownloadComplete,new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 
-        //write method for deregistration shantanu
-
-        //shantanu temporaty
-
-
-        String songName[] = {"badan_pe_sitare.mp3", "baharo_phool_barsao.mp3", "bar_bar_dekho.mp3", "chun_chun_karti_ayi.mp3"};
-
-        Toast.makeText(MohammadRafiSongs.this, "Button show start " + GlobalDefinitions.mohammadRafiSongList.size() , Toast.LENGTH_SHORT).show();
-        for(int i = 0; i < GlobalDefinitions.mohammadRafiSongList.size() ; i++) {
-            button = new Button(this);
-            button.setText(GlobalDefinitions.mohammadRafiSongList.get(i));
-            //write definition to fetch the id and set it to this button in GlobalDefinition class
-            //button.setId(GlobalDefinitions.getButtonId(songName[i]));
-            final int p = i;
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    //String uri = "http://ec2-13-234-37-59.ap-south-1.compute.amazonaws.com:8080/static/mohammad_rafi/badan_pe_sitare.mp3";
-                    String uri = GlobalDefinitions.mohammadRafiDownloadPath + GlobalDefinitions.mohammadRafiSongList.get(p) + ".mp3";
-                    System.out.println("Shantanu URI to song is : " + uri);
-                    String filename = GlobalDefinitions.mohammadRafiSongList.get(p);
-                    startSongDownload(uri, filename);
-                    Toast.makeText(MohammadRafiSongs.this, "Download starting..", Toast.LENGTH_SHORT).show();
-                }
-            });
-            rafi_layout.addView(button);
-            button.setVisibility(View.VISIBLE);
-        }
-        Toast.makeText(MohammadRafiSongs.this, "Button show end", Toast.LENGTH_SHORT).show();
+        createMohammadRafiDownloadButtons();
 
     }
 
@@ -93,20 +76,13 @@ public class MohammadRafiSongs extends AppCompatActivity {
 
         DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
         assert downloadManager != null;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.INTERNET}, 1);
-            // this will request for permission when permission is not true
-            System.out.println("Shantanu requesting for permission");
-        } else {
-            // Download code here
-            try {
-                return downloadManager.enqueue(request);// enqueue puts the download request in the queue.
-            } catch (Exception e) {
-                e.printStackTrace();
-                return 0;
-            }
+
+        try {
+            return downloadManager.enqueue(request);// enqueue puts the download request in the queue.
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
         return 0;
     }
 
@@ -133,7 +109,7 @@ public class MohammadRafiSongs extends AppCompatActivity {
                         Log.i("handleData()", "Download URI: " + uriString);
                     } else if (c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_FAILED) {
                         Log.i("handleData()", "Reason: " + c.getString(c.getColumnIndex(DownloadManager.COLUMN_REASON)));
-                        Toast.makeText(MohammadRafiSongs.this, "May be " + c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON)) , Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MohammadRafiSongs.this, "May be " + c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON)), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -145,4 +121,46 @@ public class MohammadRafiSongs extends AppCompatActivity {
         //shantanu
         unregisterReceiver(onDownloadComplete);
     }
+
+    private void createMohammadRafiDownloadButtons() {
+        LinearLayout rafi_layout = (LinearLayout) findViewById(R.id.rafi_linear_layout);
+
+        //shantanu delete later
+        Toast.makeText(MohammadRafiSongs.this, "Button show start " + g_mohammadRafiSongList.size(), Toast.LENGTH_SHORT).show();
+
+        for (int i = 0; i < g_mohammadRafiSongList.size(); i++) {
+            button = new Button(this);
+            button.setText(g_mohammadRafiSongList.get(i));
+            //write definition to fetch the id and set it to this button in GlobalDefinition class
+            //button.setId(GlobalDefinitions.getButtonId(songName[i]));
+            final int p = i;
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //String uri = "http://ec2-13-234-37-59.ap-south-1.compute.amazonaws.com:8080/static/mohammad_rafi/badan_pe_sitare.mp3";
+                    String uri = g_mohammadRafiDownloadPath + g_mohammadRafiSongList.get(p) + ".mp3";
+                    System.out.println("Shantanu URI to song is : " + uri);
+                    String filename = g_mohammadRafiSongList.get(p);
+                    startSongDownload(uri, filename);
+                    Toast.makeText(MohammadRafiSongs.this, "Download starting..", Toast.LENGTH_SHORT).show();
+                }
+            });
+            rafi_layout.addView(button);
+            button.setVisibility(View.VISIBLE);
+        }
+        Toast.makeText(MohammadRafiSongs.this, "Button show end", Toast.LENGTH_SHORT).show();
+    }
+
+    private void parseMohammadRafiSongList() {
+        try {
+            GlobalDefinitions.g_parseMohammadRafiSongList();
+        } catch (FileNotFoundException e) {
+            Toast.makeText(MohammadRafiSongs.this, "FileNotFoundException", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        } catch (IOException e) {
+            Toast.makeText(MohammadRafiSongs.this, "IOException", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
+
 }

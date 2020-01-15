@@ -27,12 +27,8 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -53,23 +49,20 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
 
-import static app.music.musicstore.GlobalDefinitions.mohammadRafiDownloadPath;
-import static app.music.musicstore.GlobalDefinitions.mohammadRafiSongListName;
+import static app.music.musicstore.GlobalDefinitions.g_externalStorageDownloadPath;
+import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiDownloadPath;
+import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiSongListName;
 
-public class MainActivity extends AppCompatActivity
-        {
+public class MainActivity extends AppCompatActivity {
 
     public long downloadID;
-    private Button button;
     static boolean rafiListDownloaded = false;
-     public final int       ASK_MULTIPLE_PERMISSION_REQUEST_CODE = 4;
-     public final int       PERMISSION_EXTERNAL_STORAGE_WRITE = 1;
-     public final int       PERMISSION_EXTERNAL_STORAGE_READ = 2;
-     public final int       PERMISSION_INTERNET              = 3;
+    public final int PERMISSION_EXTERNAL_STORAGE_WRITE = 1;
+    public final int PERMISSION_EXTERNAL_STORAGE_READ = 2;
+    public final int PERMISSION_INTERNET = 3;
 
 
-
-            private BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
+    private BroadcastReceiver onDownloadComplete = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             //Fetching the download id received with the broadcast
@@ -81,54 +74,22 @@ public class MainActivity extends AppCompatActivity
 
                 //create mohammad rafi song list
 
-                if (!hasAllRequiredPermissions())
-                {
+                if (!hasAllRequiredPermissions()) {
                     getAllPermissionsFromUser();
-                }
-                else
-                {
+                } else {
 
-                    BufferedReader reader;
-                    String p = "", q = "", r = "", s = "";
                     try {
-                        p = context.getCacheDir() + File.separator + mohammadRafiSongListName;
-                        q = "/storage/emulated/0/" + Environment.DIRECTORY_DOWNLOADS + File.separator + mohammadRafiSongListName;
-                        r = Environment.DIRECTORY_DOWNLOADS + File.separator + mohammadRafiSongListName;
-                        s = context.getExternalFilesDir(null).toString();
-
-                        System.out.println("shantanu s context.getExternalFilesDir = " + s);
-                        System.out.println("shantanu read path " + q);
-                        reader = new BufferedReader(new FileReader(q));
-                        String line = reader.readLine();
-                        while (line != null) {
-                            System.out.println("shantanu song name : " + line);
-
-                            GlobalDefinitions.mohammadRafiSongList.add(line);
-                            line = reader.readLine();
-                        }
-                    } catch (FileNotFoundException e) {
-                        System.out.println("shantanu file not found");
-                        Toast.makeText(MainActivity.this, "FileNotFoundException" + q, Toast.LENGTH_LONG).show();
-
+                        GlobalDefinitions.g_parseMohammadRafiSongList();
+                    } catch (FileNotFoundException e)
+                    {
+                        Toast.makeText(MainActivity.this, "FileNotFoundException", Toast.LENGTH_LONG).show();
                         e.printStackTrace();
                     } catch (IOException e) {
-                        System.out.println("shantanu IO exception");
                         Toast.makeText(MainActivity.this, "IOException", Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     }
+
                 }
-
-                //shantanu temporary print
-                System.out.println("shantanu list size " + GlobalDefinitions.mohammadRafiSongList.size());
-                for(int i = 0; i < GlobalDefinitions.mohammadRafiSongList.size() ; i++)
-                {
-                    System.out.println(GlobalDefinitions.mohammadRafiSongList.get(i));
-                }
-
-
-                Intent intent1 = new Intent(context, MohammadRafiSongs.class);
-                startActivity(intent1);
-
             }
         }
     };
@@ -142,12 +103,11 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if(!hasAllRequiredPermissions()) {
+        if (!hasAllRequiredPermissions()) {
             getAllPermissionsFromUser();
         }
 
         //shantanu get the individual songs list downloaded from the server
-        downloadMohammadRafiSongList();
         //downloadKishorKumarSongList();
 
 
@@ -168,7 +128,7 @@ public class MainActivity extends AppCompatActivity
 
          */
 
-        button=findViewById(R.id.Mohammad_Rafi);
+        Button button = findViewById(R.id.Mohammad_Rafi);
 
         //shantanu
         registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
@@ -180,7 +140,6 @@ public class MainActivity extends AppCompatActivity
                 // for correct solution, repeat this activity when the
                 // permissions are granted upon the first request
 
-                //downloadMohammadRafiSongList();
                 Toast.makeText(MainActivity.this, "Starting mohammad rafi activity", Toast.LENGTH_SHORT).show();
                 startMohammadRafiActivity(view);
             }
@@ -213,10 +172,10 @@ public class MainActivity extends AppCompatActivity
     public void startMohammadRafiActivity(View view) {
 
 
-        switch(view.getId()) {
+        switch (view.getId()) {
             case R.id.Mohammad_Rafi:
 
-                Log.d("SHANTANU","sendMessage case is hit");
+                Log.d("SHANTANU", "sendMessage case is hit");
 
                 Intent intent = new Intent(this, MohammadRafiSongs.class);
                 startActivity(intent);
@@ -228,58 +187,36 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void onDestroy() {
-          super.onDestroy();
-          //shantanu
-          unregisterReceiver(onDownloadComplete);
+        super.onDestroy();
+        //shantanu
+        unregisterReceiver(onDownloadComplete);
     }
 
-    private void downloadMohammadRafiSongList()
-    {
+    private void downloadMohammadRafiSongList() {
 
-        if(rafiListDownloaded == false) {
+        File rafiSongList = new File(g_externalStorageDownloadPath + g_mohammadRafiSongListName);
+
+        if (rafiSongList.exists()) {
+            System.out.println("Mohammad Rafi song list already downloaded. Returning.");
+            //shantanu delete the file and download it again.
+            rafiSongList.delete();
+        }
+
+        if (rafiListDownloaded == false) {
             Request request;// Set if download is allowed on roaming network
-            request = new Request(Uri.parse(mohammadRafiDownloadPath + mohammadRafiSongListName))
+            request = new Request(Uri.parse(g_mohammadRafiDownloadPath + g_mohammadRafiSongListName))
 
                     .setAllowedOverMetered(true)// Set if download is allowed on Mobile network
                     .setAllowedOverRoaming(true);
 
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
 
-            PackageManager m = getPackageManager();
-            String s = getPackageName();
-            try {
-                PackageInfo p = m.getPackageInfo(s, 0);
-                s = p.applicationInfo.dataDir;
-                System.out.println("shantanu application directroy initially: "+s);
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.w("yourtag", "Error Package name not found ", e);
-            }
-
-
-            //System.out.println("Shantanu before download " + Environment.getDownloadCacheDirectory());
-            System.out.println("Shantanu root directory : "+ Environment.getRootDirectory() +
-            "\ndata directory : " + Environment.getDataDirectory() +
-                    "\n download cache directory : " + Environment.getDownloadCacheDirectory() +
-                    "\n context cache direcrory : " + getCacheDir());
-
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, mohammadRafiSongListName);
-
-
-
-            //request.setDestinationInExternalPublicDir(getCacheDir().toString(), mohammadRafiSongListName);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, g_mohammadRafiSongListName);
 
             DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
             assert downloadManager != null;
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                    || ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.INTERNET}, 1);
-                // this will request for permission when permission is not true
-                System.out.println("Shantanu requesting for permission");
 
-                //shantanu add code to start the download when the permission is allowed by the user, without
-                // having to click on the button twice
-            } else {
-                // Download code here
+            if (hasAllRequiredPermissions()) {
                 try {
                     downloadID = downloadManager.enqueue(request);// enqueue puts the download request in the queue.
                     rafiListDownloaded = true;
@@ -287,21 +224,19 @@ public class MainActivity extends AppCompatActivity
                     e.printStackTrace();
 
                 }
-                System.out.println("@@@@@ Shantanu after enqueuing request");
-
+                System.out.println("Mohammad Rafi song list download after enqueueing request");
+            } else {
+                getAllPermissionsFromUser();
             }
-
         }
     }
 
-    private void downloadKishorKumarSongList()
-    {
+    private void downloadKishorKumarSongList() {
 
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void loadCertificates() throws CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
-
 
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
@@ -325,11 +260,9 @@ public class MainActivity extends AppCompatActivity
             cert = cf.generateCertificate(in);
             //System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
             System.out.println("cert=" + ((X509Certificate) cert).getSubjectDN());
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             in.close();
         }
 
@@ -351,72 +284,104 @@ public class MainActivity extends AppCompatActivity
         new test().execute((String) null);
 
     }
+    private void getAllPermissionsFromUser() {
 
-            private void getAllPermissionsFromUser()
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu requesting for write permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_EXTERNAL_STORAGE_WRITE);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu requesting for read permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_EXTERNAL_STORAGE_READ);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu requesting for internet permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, PERMISSION_INTERNET);
+        }
+    }
+
+    private boolean hasAllRequiredPermissions() {
+        boolean status = false;
+        boolean status1 = false, status2 = false, status3 = false;
+
+        if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) {
+            System.out.println("Shantanu has write permissions");
+            status1 |= true;
+        } else {
+            status1 |= false;
+            System.out.println("Shantanu has no write permissions");
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu has read permissions");
+            status2 |= true;
+        } else {
+            status2 |= false;
+            System.out.println("Shantanu has no read permissions");
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED) {
+            status3 |= true;
+            System.out.println("Shantanu has internet permissions");
+        } else {
+            status3 |= false;
+            System.out.println("Shantanu has no internet permissions");
+        }
+
+        status = status1 & status2 & status3;
+
+        Toast.makeText(getApplicationContext(), "hasWritePermissions : "+status1, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "hasReadPermissions : "+status2, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "hasInternetPermissions : "+status3, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), " hasWritePermissions : "+status1 +
+                " hasReadPermissions : "+status2 +
+                        " hasInternetPermissions : "+status3 +
+                " hasAllPermissions : "+status, Toast.LENGTH_SHORT).show();
+
+        return status;
+    }
+
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_EXTERNAL_STORAGE_WRITE : {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Toast.makeText(getApplicationContext(), "Write Permission granted", Toast.LENGTH_SHORT).show();
+                    downloadMohammadRafiSongList();
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(getApplicationContext(), "Write Permission denied", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            }
+            case PERMISSION_EXTERNAL_STORAGE_READ:
             {
-                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-                {
-                    System.out.println("Shantanu requesting for write permission");
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE }, PERMISSION_EXTERNAL_STORAGE_WRITE);
-                }
-                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-                {
-                    System.out.println("Shantanu requesting for read permission");
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE }, PERMISSION_EXTERNAL_STORAGE_READ);
-                }
-                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED)
-                {
-                    System.out.println("Shantanu requesting for internet permission");
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, PERMISSION_INTERNET);
-                }
 
             }
-
-            private boolean hasAllRequiredPermissions()
+            break;
+            case PERMISSION_INTERNET:
             {
-                boolean status = true;
-                if(
-                        (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                        (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                        (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED)
-                )
 
-                if((ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED))
-                {
-                    System.out.println("Shantanu has write permissions");
-                    status |= true;
-                }
-                else {
-                    status |= false;
-                    System.out.println("Shantanu has no write permissions");
-                }
-
-                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-                {
-                    System.out.println("Shantanu has read permissions");
-                    status|= true;
-                }
-                else{
-                    status |= false;
-                    System.out.println("Shantanu has no read permissions");
-                }
-
-                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED)
-                {
-                    status |= true;
-                    System.out.println("Shantanu has internet permissions");
-                }
-                else
-                {
-                    status |= false;
-                    System.out.println("Shantanu has no internet permissions");
-                }
-
-                return status;
             }
+            break;
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
 }
 
-
+//==========================================================================
+// New class
 class test extends AsyncTask<String, Void, String> {
 
     HostnameVerifier hostnameVerifier = new HostnameVerifier() {
@@ -431,34 +396,28 @@ class test extends AsyncTask<String, Void, String> {
     };
 
     protected String doInBackground(String... urls) {
-        try
-        {
+        try {
 
             // Tell the URLConnection to use a SocketFactory from our SSLContext
-            URL url = new URL(mohammadRafiDownloadPath + mohammadRafiSongListName);
+            URL url = new URL(g_mohammadRafiDownloadPath + g_mohammadRafiSongListName);
             HttpsURLConnection urlConnection =
-                    (HttpsURLConnection)url.openConnection();
+                    (HttpsURLConnection) url.openConnection();
             urlConnection.setSSLSocketFactory(GlobalDefinitions.g_sslContext.getSocketFactory());
             urlConnection.setHostnameVerifier(hostnameVerifier);
             InputStream inputStream = urlConnection.getInputStream();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Files.copy(inputStream, Paths.get(mohammadRafiSongListName));
-                Files.copy(inputStream, Paths.get(Environment.DIRECTORY_DOWNLOADS + mohammadRafiSongListName));
+                Files.copy(inputStream, Paths.get(g_mohammadRafiSongListName));
+                Files.copy(inputStream, Paths.get(Environment.DIRECTORY_DOWNLOADS + g_mohammadRafiSongListName));
                 System.out.println("*******************shantanu here");
             }
             System.out.println("*******************shantanu here did not enter build version if");
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
 
         }
         return null;
     }
-
-
 
 }
