@@ -9,33 +9,8 @@
     tools:showIn="@layout/activity_mohammad_rafi_songs">
 
     <LinearLayout
+        android:id="@+id/rafi_linear_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <Button
-            android:id="@+id/badan_pe_sitare"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/badan_pe_sitare" />
-
-        <Button
-            android:id="@+id/baharo_phool_barsao"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/baharo_phool_barsao" />
-
-        <Button
-            android:id="@+id/bar_bar_dekho"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/bar_bar_dekho" />
-
-        <Button
-            android:id="@+id/chun_chun_karti_ayi"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/chun_chun_karti_ayi" />
-
-    </LinearLayout>
+        android:orientation="vertical"/>
 </androidx.core.widget.NestedScrollView>
