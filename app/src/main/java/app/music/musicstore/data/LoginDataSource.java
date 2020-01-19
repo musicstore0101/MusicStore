@@ -9,15 +9,17 @@ import java.io.IOException;
  */
 public class LoginDataSource {
 
-    public Result<LoggedInUser> login(String username, String password) {
-
+    public Result<LoggedInUser> login(String username, String password, String displayname) {
         try {
             // TODO: handle loggedInUser authentication
-            LoggedInUser fakeUser =
-                    new LoggedInUser(
-                            java.util.UUID.randomUUID().toString(),
-                            "Jane Doe");
-            return new Result.Success<>(fakeUser);
+            LoggedInUser user =
+                    new LoggedInUser(username,
+                            displayname);
+            user.setPassword(password);
+
+            // set the user in in-memory DB
+
+            return new Result.Success<>(user);
         } catch (Exception e) {
             return new Result.Error(new IOException("Error logging in", e));
         }

@@ -28,7 +28,6 @@ public class GlobalDefinitions {
     public static void g_parseMohammadRafiSongList() throws FileNotFoundException, IOException {
         BufferedReader reader;
 
-
         String rafiSongListFile = "";
 
         if (rafiDownloadCompleted)

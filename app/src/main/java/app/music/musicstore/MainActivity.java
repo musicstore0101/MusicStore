@@ -49,6 +49,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
 
+import app.music.musicstore.data.model.DBUserAdapter;
+import app.music.musicstore.data.model.LoggedInUser;
+import app.music.musicstore.ui.login.LoginActivity;
+
 import static app.music.musicstore.GlobalDefinitions.g_externalStorageDownloadPath;
 import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiDownloadPath;
 import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiSongListName;
@@ -69,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
             //Checking if the received broadcast is for our enqueued download by matching download id
             if (downloadID == id) {
-                Toast.makeText(MainActivity.this, "Download Completed now", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "Download Completed", Toast.LENGTH_SHORT).show();
                 System.out.println(" !!!! Shantanu download completed");
 
                 //create mohammad rafi song list
@@ -82,10 +86,10 @@ public class MainActivity extends AppCompatActivity {
                         GlobalDefinitions.g_parseMohammadRafiSongList();
                     } catch (FileNotFoundException e)
                     {
-                        Toast.makeText(MainActivity.this, "FileNotFoundException", Toast.LENGTH_LONG).show();
+                        //Toast.makeText(MainActivity.this, "FileNotFoundException", Toast.LENGTH_LONG).show();
                         e.printStackTrace();
                     } catch (IOException e) {
-                        Toast.makeText(MainActivity.this, "IOException", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "IOException", Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     }
 
@@ -105,6 +109,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (!hasAllRequiredPermissions()) {
             getAllPermissionsFromUser();
+        }
+        else
+        {
+            System.out.println("Shantanu on create has permissions already");
+            downloadMohammadRafiSongList();
         }
 
         //shantanu get the individual songs list downloaded from the server
@@ -140,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
                 // for correct solution, repeat this activity when the
                 // permissions are granted upon the first request
 
-                Toast.makeText(MainActivity.this, "Starting mohammad rafi activity", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, "Starting mohammad rafi activity", Toast.LENGTH_SHORT).show();
                 startMohammadRafiActivity(view);
             }
         });
@@ -150,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
         return true;
     }
 
@@ -163,6 +173,15 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        }
+        else if(id == R.id.logout)
+        {
+            LoggedInUser user = getLoggedInUser();
+            if(logout(user.getUserId()) == true)
+            {
+                Intent intent = new Intent(this, LoginActivity.class);
+                startActivity(intent);
+            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -192,10 +211,22 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(onDownloadComplete);
     }
 
+    private boolean logout(String username)
+    {
+        boolean status = true;
+        DBUserAdapter dbUser = new DBUserAdapter(MainActivity.this);
+        dbUser.open();
+        status = dbUser.Logout(username);
+        dbUser.close();
+        return status;
+    }
+
     private void downloadMohammadRafiSongList() {
 
         File rafiSongList = new File(g_externalStorageDownloadPath + g_mohammadRafiSongListName);
 
+        System.out.println("***** shantanu rafisonglist = "+ rafiSongList.toString()
+        + " rafiListDownloaded = " + rafiListDownloaded);
         if (rafiSongList.exists()) {
             System.out.println("Mohammad Rafi song list already downloaded. Returning.");
             //shantanu delete the file and download it again.
@@ -226,9 +257,19 @@ public class MainActivity extends AppCompatActivity {
                 }
                 System.out.println("Mohammad Rafi song list download after enqueueing request");
             } else {
+                System.out.println("!!!!!!!!!!!!! before getAllPermissionsFromUser while downloading song list");
                 getAllPermissionsFromUser();
             }
         }
+    }
+
+    private LoggedInUser getLoggedInUser() {
+        LoggedInUser user = null;
+        DBUserAdapter dbUser = new DBUserAdapter(MainActivity.this);
+        dbUser.open();
+        user = dbUser.Login();
+        dbUser.close();
+        return user;
     }
 
     private void downloadKishorKumarSongList() {
@@ -302,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean hasAllRequiredPermissions() {
+        System.out.println("!!!!!!! shantanu " + new Exception().getStackTrace()[1].getMethodName());
         boolean status = false;
         boolean status1 = false, status2 = false, status3 = false;
 
@@ -329,15 +371,12 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("Shantanu has no internet permissions");
         }
 
-        status = status1 & status2 & status3;
+        //Toast.makeText(MainActivity.this, "Write permissions: "+status1, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MainActivity.this, "Read permissions: "+status2, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MainActivity.this, "Internet permissions: "+status3, Toast.LENGTH_SHORT).show();
 
-        Toast.makeText(getApplicationContext(), "hasWritePermissions : "+status1, Toast.LENGTH_SHORT).show();
-        Toast.makeText(getApplicationContext(), "hasReadPermissions : "+status2, Toast.LENGTH_SHORT).show();
-        Toast.makeText(getApplicationContext(), "hasInternetPermissions : "+status3, Toast.LENGTH_SHORT).show();
-        Toast.makeText(getApplicationContext(), " hasWritePermissions : "+status1 +
-                " hasReadPermissions : "+status2 +
-                        " hasInternetPermissions : "+status3 +
-                " hasAllPermissions : "+status, Toast.LENGTH_SHORT).show();
+        status = status1 & status2 & status3;
+        //Toast.makeText(MainActivity.this, "All permissions: "+status, Toast.LENGTH_SHORT).show();
 
         return status;
     }
@@ -350,16 +389,11 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    Toast.makeText(getApplicationContext(), "Write Permission granted", Toast.LENGTH_SHORT).show();
+                    System.out.println("Shantanu coming inside permissions");
                     downloadMohammadRafiSongList();
 
                 } else {
 
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    Toast.makeText(getApplicationContext(), "Write Permission denied", Toast.LENGTH_SHORT).show();
                 }
                 break;
             }

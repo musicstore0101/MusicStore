@@ -5,19 +5,23 @@ package app.music.musicstore.data.model;
  */
 public class LoggedInUser {
 
-    private String userId;
+    private String userName;
     private String displayName;
+    private String password;
 
     public LoggedInUser(String userId, String displayName) {
-        this.userId = userId;
+        this.userName = userId;
         this.displayName = displayName;
     }
 
     public String getUserId() {
-        return userId;
+        return userName;
     }
 
     public String getDisplayName() {
         return displayName;
     }
+
+    public void setPassword(String password) {this.password = password;}
+    public String getPassword() {return password;};
 }

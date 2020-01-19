@@ -1,10 +1,15 @@
 package app.music.musicstore.ui.login;
 
+import android.Manifest;
 import android.app.Activity;
 
+import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -22,13 +27,23 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import app.music.musicstore.MainActivity;
 import app.music.musicstore.R;
+import app.music.musicstore.data.model.DBUserAdapter;
+import app.music.musicstore.data.model.LoggedInUser;
 import app.music.musicstore.ui.login.LoginViewModel;
 import app.music.musicstore.ui.login.LoginViewModelFactory;
 
 public class LoginActivity extends AppCompatActivity {
 
     private LoginViewModel loginViewModel;
+    public final int PERMISSION_EXTERNAL_STORAGE_WRITE = 1;
+    public final int PERMISSION_EXTERNAL_STORAGE_READ = 2;
+    public final int PERMISSION_INTERNET = 3;
+
+    EditText usernameEditText;
+    EditText passwordEditText;
+    EditText displaynameEditText;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,10 +52,29 @@ public class LoginActivity extends AppCompatActivity {
         loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
 
-        final EditText usernameEditText = findViewById(R.id.username);
-        final EditText passwordEditText = findViewById(R.id.password);
         final Button loginButton = findViewById(R.id.login);
         final ProgressBar loadingProgressBar = findViewById(R.id.loading);
+        usernameEditText = findViewById(R.id.username);
+        passwordEditText = findViewById(R.id.password);
+        displaynameEditText = findViewById(R.id.Displayname);
+
+
+        if (!hasAllRequiredPermissions()) {
+            getAllPermissionsFromUser();
+        }
+        else
+        {
+            System.out.println("Shantanu coming inside permissions");
+            LoggedInUser user = getLoggedInUser();
+            if (user != null && user.getUserId() != "") {
+                System.out.println("@@@@@@@@ shantanu user exists after permission");
+                usernameEditText.setText(user.getUserId());
+                passwordEditText.setText(user.getPassword());
+                displaynameEditText.setText(user.getDisplayName());
+                loginViewModel.login(user.getUserId(), user.getPassword(), user.getDisplayName());
+            }
+        }
+
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
@@ -61,6 +95,7 @@ public class LoginActivity extends AppCompatActivity {
         loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
             @Override
             public void onChanged(@Nullable LoginResult loginResult) {
+
                 if (loginResult == null) {
                     return;
                 }
@@ -73,8 +108,27 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 setResult(Activity.RESULT_OK);
 
+                try {
+                    DBUserAdapter dbUser = new DBUserAdapter(LoginActivity.this);
+                    dbUser.open();
+                    // shantanu to delete later
+                    System.out.println("@@@@@@@ Shantanu adding user, userid = " + usernameEditText.getText().toString()
+                    + " displayname = " + displaynameEditText.getText().toString() );
+                    dbUser.AddUser(usernameEditText.getText().toString(),
+                            passwordEditText.getText().toString(),
+                            displaynameEditText.getText().toString());
+                    dbUser.close();
+                }catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
                 //Complete and destroy login activity once successful
                 finish();
+
+                //shantanu
+                Intent myIntent = new Intent(LoginActivity.this, MainActivity.class);
+                LoginActivity.this.startActivity(myIntent);
             }
         });
 
@@ -103,7 +157,8 @@ public class LoginActivity extends AppCompatActivity {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     loginViewModel.login(usernameEditText.getText().toString(),
-                            passwordEditText.getText().toString());
+                            passwordEditText.getText().toString(),
+                            displaynameEditText.getText().toString());
                 }
                 return false;
             }
@@ -114,18 +169,123 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 loadingProgressBar.setVisibility(View.VISIBLE);
                 loginViewModel.login(usernameEditText.getText().toString(),
-                        passwordEditText.getText().toString());
+                        passwordEditText.getText().toString(),
+                        displaynameEditText.getText().toString());
             }
         });
     }
 
     private void updateUiWithUser(LoggedInUserView model) {
-        String welcome = getString(R.string.welcome) + model.getDisplayName();
+        String welcome = "Welcome " + model.getDisplayName() + "!";
         // TODO : initiate successful logged in experience
         Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
     }
 
     private void showLoginFailed(@StringRes Integer errorString) {
         Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
+    }
+
+    private LoggedInUser getLoggedInUser() {
+        LoggedInUser user = null;
+        DBUserAdapter dbUser = new DBUserAdapter(LoginActivity.this);
+        dbUser.open();
+        user = dbUser.Login();
+        dbUser.close();
+        return user;
+    }
+
+    private void getAllPermissionsFromUser() {
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu requesting for write permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_EXTERNAL_STORAGE_WRITE);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu requesting for read permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_EXTERNAL_STORAGE_READ);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu requesting for internet permission");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, PERMISSION_INTERNET);
+        }
+    }
+
+    private boolean hasAllRequiredPermissions() {
+        System.out.println("!!!!!!! shantanu " + new Exception().getStackTrace()[1].getMethodName());
+        boolean status = false;
+        boolean status1 = false, status2 = false, status3 = false;
+
+        if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) {
+            System.out.println("Shantanu has write permissions");
+            status1 |= true;
+        } else {
+            status1 |= false;
+            System.out.println("Shantanu has no write permissions");
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Shantanu has read permissions");
+            status2 |= true;
+        } else {
+            status2 |= false;
+            System.out.println("Shantanu has no read permissions");
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED) {
+            status3 |= true;
+            System.out.println("Shantanu has internet permissions");
+        } else {
+            status3 |= false;
+            System.out.println("Shantanu has no internet permissions");
+        }
+
+        //Toast.makeText(MainActivity.this, "Write permissions: "+status1, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MainActivity.this, "Read permissions: "+status2, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MainActivity.this, "Internet permissions: "+status3, Toast.LENGTH_SHORT).show();
+
+        status = status1 & status2 & status3;
+        //Toast.makeText(MainActivity.this, "All permissions: "+status, Toast.LENGTH_SHORT).show();
+
+        return status;
+    }
+
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_EXTERNAL_STORAGE_WRITE : {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    System.out.println("Shantanu coming inside permissions");
+                    /*
+                    LoggedInUser user = getLoggedInUser();
+                    if (user != null) {
+                        System.out.println("@@@@@@@@ shantanu user exists after permission");
+                        usernameEditText.setText(user.getUserId());
+                        passwordEditText.setText(user.getPassword());
+                        displaynameEditText.setText(user.getDisplayName());
+                        loginViewModel.login(user.getUserId(), user.getPassword(), user.getDisplayName());
+                    }
+                     */
+                } else {
+
+                }
+                break;
+            }
+            case PERMISSION_EXTERNAL_STORAGE_READ:
+            {
+
+            }
+            break;
+            case PERMISSION_INTERNET:
+            {
+
+            }
+            break;
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 }

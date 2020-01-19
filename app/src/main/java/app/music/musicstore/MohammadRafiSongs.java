@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -14,6 +15,7 @@ import android.os.Bundle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -26,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -71,7 +74,7 @@ public class MohammadRafiSongs extends AppCompatActivity {
                 .setAllowedOverRoaming(true);
 
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename + ".mp3");
 
 
         DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
@@ -109,7 +112,7 @@ public class MohammadRafiSongs extends AppCompatActivity {
                         Log.i("handleData()", "Download URI: " + uriString);
                     } else if (c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_FAILED) {
                         Log.i("handleData()", "Reason: " + c.getString(c.getColumnIndex(DownloadManager.COLUMN_REASON)));
-                        Toast.makeText(MohammadRafiSongs.this, "May be " + c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON)), Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MohammadRafiSongs.this, "May be " + c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON)), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -126,7 +129,7 @@ public class MohammadRafiSongs extends AppCompatActivity {
         LinearLayout rafi_layout = (LinearLayout) findViewById(R.id.rafi_linear_layout);
 
         //shantanu delete later
-        Toast.makeText(MohammadRafiSongs.this, "Button show start " + g_mohammadRafiSongList.size(), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MohammadRafiSongs.this, "Button show start " + g_mohammadRafiSongList.size(), Toast.LENGTH_SHORT).show();
 
         for (int i = 0; i < g_mohammadRafiSongList.size(); i++) {
             button = new Button(this);
@@ -139,28 +142,37 @@ public class MohammadRafiSongs extends AppCompatActivity {
                 public void onClick(View view) {
                     //String uri = "http://ec2-13-234-37-59.ap-south-1.compute.amazonaws.com:8080/static/mohammad_rafi/badan_pe_sitare.mp3";
                     String uri = g_mohammadRafiDownloadPath + g_mohammadRafiSongList.get(p) + ".mp3";
-                    System.out.println("Shantanu URI to song is : " + uri);
                     String filename = g_mohammadRafiSongList.get(p);
-                    startSongDownload(uri, filename);
-                    Toast.makeText(MohammadRafiSongs.this, "Download starting..", Toast.LENGTH_SHORT).show();
+                    String fullPath = g_externalStorageDownloadPath + filename + ".mp3";
+                    File file = new File(fullPath);
+                    System.out.println("Shantanu ******** fullpath = "+fullPath);
+                    if(!file.exists()) {
+                        System.out.println("Shantanu file does not exist");
+                        startSongDownload(uri, filename);
+                        Toast.makeText(MohammadRafiSongs.this, "Download starting..", Toast.LENGTH_SHORT).show();
+                    }
+                    else
+                    {
+                        System.out.println("Shantanu file exists already");
+                        Toast.makeText(MohammadRafiSongs.this, filename +" exists already..", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
             rafi_layout.addView(button);
             button.setVisibility(View.VISIBLE);
         }
-        Toast.makeText(MohammadRafiSongs.this, "Button show end", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(MohammadRafiSongs.this, "Button show end", Toast.LENGTH_SHORT).show();
     }
 
     private void parseMohammadRafiSongList() {
         try {
             GlobalDefinitions.g_parseMohammadRafiSongList();
         } catch (FileNotFoundException e) {
-            Toast.makeText(MohammadRafiSongs.this, "FileNotFoundException", Toast.LENGTH_LONG).show();
+            //Toast.makeText(MohammadRafiSongs.this, "FileNotFoundException", Toast.LENGTH_LONG).show();
             e.printStackTrace();
         } catch (IOException e) {
-            Toast.makeText(MohammadRafiSongs.this, "IOException", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(MohammadRafiSongs.this, "IOException", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
     }
-
 }
