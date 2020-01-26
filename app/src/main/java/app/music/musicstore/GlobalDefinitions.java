@@ -16,14 +16,16 @@ public class GlobalDefinitions {
     public final String g_staticPath = "http://ec2-13-234-37-59.ap-south-1.compute.amazonaws.com:8080/static/";
     public final static String g_mohammadRafiDownloadPath = "http://ec2-13-234-37-59.ap-south-1.compute.amazonaws.com:8080/static/mohammad_rafi/";
     public final static String g_mohammadRafiSongListName = "mohammad_rafi_song_list.txt";
+    public static final String BASE_URL = "http://ec2-13-234-37-59.ap-south-1.compute.amazonaws.com:8085/greeting";
 
     //shantanu change the directory to app specific later
     public final static String g_externalStorageDownloadPath = "/storage/emulated/0/" + Environment.DIRECTORY_DOWNLOADS + File.separator;
     public static ArrayList<String> g_mohammadRafiSongList = new ArrayList<String>();
 
-
     public static SSLContext g_sslContext;
     public static boolean rafiDownloadCompleted = false;
+
+    public static boolean authenticationDone = false;
 
     public static void g_parseMohammadRafiSongList() throws FileNotFoundException, IOException {
         BufferedReader reader;

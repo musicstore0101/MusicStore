@@ -33,11 +33,18 @@ public class LoginViewModel extends ViewModel {
         // can be launched in a separate asynchronous job
         Result<LoggedInUser> result = loginRepository.login(username, password, displayname);
 
+        showLoginResult(result);
+
+    }
+
+    public void showLoginResult(Result<LoggedInUser> result)
+    {
         if (result instanceof Result.Success) {
             LoggedInUser data = ((Result.Success<LoggedInUser>) result).getData();
             loginResult.setValue(new LoginResult(new LoggedInUserView(data.getDisplayName())));
         } else {
-            loginResult.setValue(new LoginResult(R.string.login_failed));
+            LoginResult res = new LoginResult(R.string.login_failed);
+            loginResult.setValue(res);
         }
     }
 

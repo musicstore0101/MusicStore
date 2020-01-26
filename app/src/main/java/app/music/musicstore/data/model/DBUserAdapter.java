@@ -95,6 +95,14 @@ public class DBUserAdapter {
         return status;
     }
 
+    public boolean removeAll() throws SQLException
+    {
+        boolean status = true;
+        //status = db.delete(DATABASE_TABLE, KEY_USERNAME + "=?", new String[]{username}) > 0;
+        db.execSQL("delete from "+ DATABASE_TABLE);
+        return status;
+    }
+
     public LoggedInUser Login() throws SQLException
     {
         LoggedInUser user;

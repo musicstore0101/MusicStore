@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModelProviders;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -27,12 +26,16 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+
 import app.music.musicstore.MainActivity;
 import app.music.musicstore.R;
 import app.music.musicstore.data.model.DBUserAdapter;
 import app.music.musicstore.data.model.LoggedInUser;
-import app.music.musicstore.ui.login.LoginViewModel;
-import app.music.musicstore.ui.login.LoginViewModelFactory;
+
+import static app.music.musicstore.GlobalDefinitions.g_mohammadRafiDownloadPath;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -48,6 +51,12 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        try {
+            PrintStream o = new PrintStream(new File(g_mohammadRafiDownloadPath+"A.txt"));
+            System.setOut(o);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         setContentView(R.layout.activity_login);
         loginViewModel = ViewModelProviders.of(this, new LoginViewModelFactory())
                 .get(LoginViewModel.class);
@@ -61,11 +70,10 @@ public class LoginActivity extends AppCompatActivity {
 
         if (!hasAllRequiredPermissions()) {
             getAllPermissionsFromUser();
-        }
-        else
-        {
+        } else {
             System.out.println("Shantanu coming inside permissions");
-            LoggedInUser user = getLoggedInUser();
+            LoggedInUser user = null;
+            user = getLoggedInUser();
             if (user != null && user.getUserId() != "") {
                 System.out.println("@@@@@@@@ shantanu user exists after permission");
                 usernameEditText.setText(user.getUserId());
@@ -74,7 +82,6 @@ public class LoginActivity extends AppCompatActivity {
                 loginViewModel.login(user.getUserId(), user.getPassword(), user.getDisplayName());
             }
         }
-
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
@@ -96,39 +103,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onChanged(@Nullable LoginResult loginResult) {
 
-                if (loginResult == null) {
-                    return;
-                }
-                loadingProgressBar.setVisibility(View.GONE);
-                if (loginResult.getError() != null) {
-                    showLoginFailed(loginResult.getError());
-                }
-                if (loginResult.getSuccess() != null) {
-                    updateUiWithUser(loginResult.getSuccess());
-                }
-                setResult(Activity.RESULT_OK);
-
-                try {
-                    DBUserAdapter dbUser = new DBUserAdapter(LoginActivity.this);
-                    dbUser.open();
-                    // shantanu to delete later
-                    System.out.println("@@@@@@@ Shantanu adding user, userid = " + usernameEditText.getText().toString()
-                    + " displayname = " + displaynameEditText.getText().toString() );
-                    dbUser.AddUser(usernameEditText.getText().toString(),
-                            passwordEditText.getText().toString(),
-                            displaynameEditText.getText().toString());
-                    dbUser.close();
-                }catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-
-                //Complete and destroy login activity once successful
-                finish();
-
-                //shantanu
-                Intent myIntent = new Intent(LoginActivity.this, MainActivity.class);
-                LoginActivity.this.startActivity(myIntent);
+                showLoginResult(loginResult);
             }
         });
 
@@ -168,11 +143,83 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 loadingProgressBar.setVisibility(View.VISIBLE);
+                /*
                 loginViewModel.login(usernameEditText.getText().toString(),
                         passwordEditText.getText().toString(),
                         displaynameEditText.getText().toString());
+                */
+
+                String username = usernameEditText.getText().toString();
+                String password = passwordEditText.getText().toString();
+                String displayname = displaynameEditText.getText().toString();
+                doRemoteLogin(username, password, displayname);
             }
         });
+    }
+
+    public void showLoginResult(LoginResult loginResult) {
+        if (loginResult == null) {
+            return;
+        }
+        final ProgressBar loadingProgressBar = findViewById(R.id.loading);
+        loadingProgressBar.setVisibility(View.GONE);
+        if (loginResult.getError() != null) {
+            showLoginFailed(loginResult.getError());
+        }
+        if (loginResult.getSuccess() != null) {
+            updateUiWithUser(loginResult.getSuccess());
+        }
+
+        if(loginResult.getSuccess() != null) {
+            setResult(Activity.RESULT_OK);
+
+            try {
+                DBUserAdapter dbUser = new DBUserAdapter(LoginActivity.this);
+                dbUser.open();
+                // shantanu to delete later
+                System.out.println("@@@@@@@ Shantanu adding user, userid = " + usernameEditText.getText().toString()
+                        + " displayname = " + displaynameEditText.getText().toString());
+                dbUser.AddUser(usernameEditText.getText().toString(),
+                        passwordEditText.getText().toString(),
+                        displaynameEditText.getText().toString());
+                dbUser.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            //Complete and destroy login activity once successful
+            finish();
+
+            //shantanu
+            Intent myIntent = new Intent(LoginActivity.this, MainActivity.class);
+
+            System.out.println("^^^^^^^^^^^^^^ shantanu before changing activity");
+            LoginActivity.this.startActivity(myIntent);
+        }
+
+        else
+        {
+            DBUserAdapter dbUser = new DBUserAdapter(LoginActivity.this);
+            dbUser.open();
+            dbUser.removeAll();
+            dbUser.close();
+
+            Intent myIntent = new Intent(LoginActivity.this, LoginActivity.class);
+            startActivity(myIntent);
+        }
+    }
+
+    private LoggedInUser doRemoteLogin(String username, String password, String displayname) {
+        System.out.println("^^^^^^^^^^^^ shantanu coming here : " + username + " : " + password);
+        LoggedInUser user = null;
+        String parameters = username + "!" + password + "!" + displayname;
+
+        System.out.println("^^^^^^^^^^^^ shantanu coming here : " + parameters);
+
+        new AuthenticateUser(loginViewModel).execute(parameters);
+
+        System.out.println("@@@@ shantanu just before returning");
+        return user;
     }
 
     private void updateUiWithUser(LoggedInUserView model) {
@@ -252,7 +299,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case PERMISSION_EXTERNAL_STORAGE_WRITE : {
+            case PERMISSION_EXTERNAL_STORAGE_WRITE: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -273,13 +320,11 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 break;
             }
-            case PERMISSION_EXTERNAL_STORAGE_READ:
-            {
+            case PERMISSION_EXTERNAL_STORAGE_READ: {
 
             }
             break;
-            case PERMISSION_INTERNET:
-            {
+            case PERMISSION_INTERNET: {
 
             }
             break;
